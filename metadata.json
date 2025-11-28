@@ -1,0 +1,5 @@
+{
+  "name": "Noor Al-Haram",
+  "description": "An elegant Quranic listening application featuring four renowned Reciters of the Haram, with verse-by-verse selection and AI-powered Tafseer using Gemini.",
+  "requestFramePermissions": []
+}

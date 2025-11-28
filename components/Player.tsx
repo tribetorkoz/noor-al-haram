@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { AyahResponse, Ayah } from '../types';
-import { Play, Pause, SkipForward, SkipBack, Repeat, Eye, EyeOff, Loader2, Sparkles, X, BookOpen, Mic, Settings2, RotateCcw, Volume2, BookOpenText } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Repeat, Eye, EyeOff, Loader2, Sparkles, X, Mic, RotateCcw, BookOpenText } from 'lucide-react';
 import { getTafseer } from '../services/geminiService';
 import { fetchFullSurah } from '../services/quranService';
 
@@ -22,7 +22,6 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
   const [isPlaying, setIsPlaying] = useState(false);
   
   // Hifz Engine State
-  const [isHifzMode, setIsHifzMode] = useState(true); // Default to Hifz tools visible
   const [repeatCount, setRepeatCount] = useState<number>(3); 
   const [currentRepeat, setCurrentRepeat] = useState(0); 
   const [isLooping, setIsLooping] = useState(false);
@@ -133,14 +132,12 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
   };
 
   const handleMistake = () => {
-      // The "Panic Button" logic
-      // Reset loops for this ayah, restart immediately
       if (audioRef.current) {
           audioRef.current.currentTime = 0;
           audioRef.current.play();
           setIsPlaying(true);
-          setIsUserTurn(false); // Cancel echo
-          setCurrentRepeat(0); // Reset progress, force mastery
+          setIsUserTurn(false); 
+          setCurrentRepeat(0); 
       }
   };
 
@@ -174,15 +171,19 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
     <>
       <div className="h-full w-full flex flex-col relative z-10">
         
-        {/* --- Header Info --- */}
-        <div className="flex-none pt-4 flex justify-center z-20">
+        {/* --- Header Info (Mobile Only mainly, but adapted for desktop) --- */}
+        <div className="flex-none pt-2 flex justify-center z-20 md:absolute md:top-8 md:left-8 md:pt-0">
+            {/* On Mobile: Click to open search. On Desktop: Just a label (search is in sidebar) */}
             <button 
                 onClick={onOpenSearch}
-                className="bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 text-amber-100 hover:bg-white/10 transition-all group"
+                className={`bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 text-amber-100 transition-all group ${
+                    // Disable pointer events on desktop because sidebar exists
+                    'md:pointer-events-none md:bg-transparent md:border-none md:px-0'
+                }`}
             >
                 <span className="text-xs text-amber-500 font-bold tracking-widest uppercase">{ayahData.surah.englishName}</span>
                 <span className="w-1 h-1 bg-white/20 rounded-full"></span>
-                <span className="font-quran text-lg group-hover:scale-105 transition-transform">{ayahData.surah.name}</span>
+                <span className="font-quran text-lg md:text-2xl group-hover:scale-105 transition-transform">{ayahData.surah.name}</span>
             </button>
         </div>
 
@@ -192,9 +193,9 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
             {/* Scrollable Text Area */}
             <div 
                 ref={textContainerRef}
-                className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-12 relative"
+                className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-12 relative flex items-center justify-center"
             >
-                <div className="min-h-full flex flex-col items-center justify-center py-20 md:py-32">
+                <div className="w-full flex flex-col items-center justify-center py-20 md:py-10">
                     
                     {isLoading ? (
                         <div className="flex flex-col items-center gap-4 animate-pulse">
@@ -202,7 +203,7 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                             <span className="text-xs text-amber-500/50 tracking-[0.2em]">جاري التحميل</span>
                         </div>
                     ) : (
-                        <div className={`relative w-full max-w-4xl text-center transition-all duration-500 ${isUserTurn ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}>
+                        <div className={`relative w-full max-w-5xl text-center transition-all duration-500 ${isUserTurn ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}>
                             
                             {/* Echo Mode Status Indicator */}
                             {isUserTurn && (
@@ -211,7 +212,6 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                                         <Mic className="w-4 h-4 animate-pulse" />
                                         <span>دورك الآن.. ردد الآية</span>
                                     </div>
-                                    {/* Progress Bar */}
                                     <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]" 
@@ -228,9 +228,9 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                                 </div>
                             )}
 
-                            {/* The Ayah Text */}
+                            {/* The Ayah Text - MASSIVE ON DESKTOP */}
                             <h1 
-                                className={`font-quran text-[2rem] sm:text-4xl md:text-5xl lg:text-[4rem] leading-[2.5] text-white transition-all duration-500 ${
+                                className={`font-quran text-[2rem] sm:text-4xl md:text-[3.5rem] lg:text-[5rem] leading-[2.6] md:leading-[2.8] text-white transition-all duration-500 ${
                                     viewMode === 'hidden' ? 'blur-2xl opacity-0 hover:opacity-100 hover:blur-0 cursor-pointer' : ''
                                 }`}
                                 dir="rtl"
@@ -266,82 +266,86 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
         </div>
 
         {/* --- Genius Control Bar (Bottom) --- */}
-        <div className="flex-none p-4 pb-8 flex flex-col items-center justify-center gap-6 relative z-50">
+        {/* On desktop, allow it to span wider */}
+        <div className="flex-none p-4 pb-8 md:pb-6 flex flex-col items-center justify-center gap-6 relative z-50 md:bg-black/20 md:backdrop-blur-md md:border-t md:border-white/5 md:w-full">
             
-            {/* 1. Hifz Tools (Top Row) */}
-            <div className="flex items-center gap-4 bg-[#0f172a] border border-white/10 rounded-2xl p-2 shadow-2xl">
+            <div className="flex flex-col md:flex-row-reverse items-center gap-6 w-full max-w-5xl justify-between">
                 
-                {/* Loop Controls */}
-                <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+                {/* 1. Playback Controls (Center on Mobile, Left on Desktop) */}
+                <div className="flex items-center gap-6 md:order-2 md:flex-1 md:justify-center">
+                    <button onClick={onPrev} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipBack className="w-6 h-6" /></button>
+                    
                     <button 
-                        onClick={() => setIsLooping(!isLooping)}
-                        className={`p-2 rounded-lg transition-colors ${isLooping ? 'bg-amber-500 text-black' : 'text-white/40 hover:text-white'}`}
-                        title="تفعيل التكرار"
+                        onClick={togglePlay}
+                        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 ${
+                            isPlaying ? 'bg-amber-500 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/20 hover:scale-105'
+                        }`}
                     >
-                        <Repeat className="w-4 h-4" />
+                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
                     </button>
-                    {isLooping && (
-                        <div className="flex items-center gap-2">
-                             <button onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">-</button>
-                             <span className="text-xs font-mono w-4 text-center">{repeatCount}</span>
-                             <button onClick={() => setRepeatCount(Math.min(20, repeatCount + 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">+</button>
-                        </div>
-                    )}
+
+                    <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipForward className="w-6 h-6" /></button>
                 </div>
 
-                {/* Echo Mode */}
-                <button 
-                    onClick={() => setEchoMode(!echoMode)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
-                        echoMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
-                    }`}
-                    title="نظام التلقين (صمت للترديد)"
-                >
-                    <Mic className="w-4 h-4" />
-                    <span className="text-[10px] font-bold">تلقين</span>
-                </button>
+                {/* 2. Hifz Tools (Top on Mobile, Right on Desktop) */}
+                <div className="flex items-center gap-4 bg-[#0f172a] md:bg-transparent md:shadow-none md:border-none border border-white/10 rounded-2xl p-2 shadow-2xl md:order-3 md:justify-end">
+                    
+                    {/* Loop Controls */}
+                    <div className="flex items-center gap-2 pl-4 border-l border-white/10 md:border-white/20">
+                        <button 
+                            onClick={() => setIsLooping(!isLooping)}
+                            className={`p-2 rounded-lg transition-colors ${isLooping ? 'bg-amber-500 text-black' : 'text-white/40 hover:text-white'}`}
+                            title="تفعيل التكرار"
+                        >
+                            <Repeat className="w-4 h-4" />
+                        </button>
+                        {isLooping && (
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">-</button>
+                                <span className="text-xs font-mono w-4 text-center">{repeatCount}</span>
+                                <button onClick={() => setRepeatCount(Math.min(20, repeatCount + 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">+</button>
+                            </div>
+                        )}
+                    </div>
 
-                {/* View Mode (Eye) */}
-                <button 
-                    onClick={cycleViewMode}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
-                        viewMode !== 'read' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
-                    }`}
-                    title="مستويات الإخفاء"
-                >
-                    {viewMode === 'read' ? <Eye className="w-4 h-4" /> : viewMode === 'blur' ? <span className="text-xs font-bold">1st</span> : <EyeOff className="w-4 h-4" />}
-                </button>
+                    {/* Echo Mode */}
+                    <button 
+                        onClick={() => setEchoMode(!echoMode)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                            echoMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                        }`}
+                        title="نظام التلقين (صمت للترديد)"
+                    >
+                        <Mic className="w-4 h-4" />
+                        <span className="text-[10px] font-bold hidden md:inline">تلقين</span>
+                    </button>
 
-                 {/* Mistake Button (Panic) */}
-                 <button 
-                    onClick={handleMistake}
-                    className="p-2 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                    title="أعد الآية (أخطأت)"
-                >
-                    <RotateCcw className="w-4 h-4" />
-                </button>
-            </div>
+                    {/* View Mode (Eye) */}
+                    <button 
+                        onClick={cycleViewMode}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                            viewMode !== 'read' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                        }`}
+                        title="مستويات الإخفاء"
+                    >
+                        {viewMode === 'read' ? <Eye className="w-4 h-4" /> : viewMode === 'blur' ? <span className="text-xs font-bold">1st</span> : <EyeOff className="w-4 h-4" />}
+                    </button>
 
-            {/* 2. Main Playback Controls (Bottom Row) */}
-            <div className="flex items-center gap-6">
-                 <button onClick={onPrev} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipBack className="w-6 h-6" /></button>
-                 
-                 <button 
-                    onClick={togglePlay}
-                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 ${
-                        isPlaying ? 'bg-amber-500 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/20 hover:scale-105'
-                    }`}
-                 >
-                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
-                 </button>
+                    {/* Mistake Button (Panic) */}
+                    <button 
+                        onClick={handleMistake}
+                        className="p-2 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="أعد الآية (أخطأت)"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </button>
+                </div>
 
-                 <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipForward className="w-6 h-6" /></button>
-            </div>
-
-            {/* 3. Extra Tools (Bottom Links) */}
-            <div className="flex items-center gap-4 text-white/30">
-                <button onClick={handleOpenFullSurah} className="hover:text-amber-400 transition-colors p-2" title="قراءة السورة"><BookOpenText className="w-5 h-5" /></button>
-                <button onClick={fetchTafseer} className="hover:text-amber-400 transition-colors p-2" title="تفسير"><Sparkles className="w-5 h-5" /></button>
+                {/* 3. Extra Tools (Links) */}
+                <div className="flex items-center gap-4 text-white/30 md:order-1 md:justify-start">
+                    <button onClick={handleOpenFullSurah} className="hover:text-amber-400 transition-colors p-2" title="قراءة السورة"><BookOpenText className="w-5 h-5" /></button>
+                    <button onClick={fetchTafseer} className="hover:text-amber-400 transition-colors p-2" title="تفسير"><Sparkles className="w-5 h-5" /></button>
+                </div>
             </div>
 
         </div>
@@ -371,16 +375,16 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
         </div>
       )}
 
-      {/* --- Tafseer Overlay --- */}
+      {/* --- Tafseer Overlay (Slide-over on Desktop maybe? Keeping modal for now but styled) --- */}
       {tafseer && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setTafseer(null)}>
-            <div className="bg-[#0f172a] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+            <div className="bg-[#0f172a] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-white/10 flex justify-between items-center">
                     <h3 className="text-emerald-400 font-bold flex items-center gap-2"><Sparkles className="w-4 h-4" /> التفسير الميسر</h3>
-                    <button onClick={() => setTafseer(null)}><X className="w-5 h-5 text-white/50" /></button>
+                    <button onClick={() => setTafseer(null)}><X className="w-5 h-5 text-white/50 hover:text-white" /></button>
                 </div>
-                <div className="p-6 overflow-y-auto custom-scrollbar">
-                    <p className="text-right text-lg leading-loose text-gray-200 font-light whitespace-pre-line">{tafseer}</p>
+                <div className="p-8 overflow-y-auto custom-scrollbar">
+                    <p className="text-right text-xl leading-loose text-gray-200 font-light whitespace-pre-line font-quran">{tafseer}</p>
                 </div>
             </div>
         </div>

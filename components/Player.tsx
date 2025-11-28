@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { AyahResponse } from '../types';
-import { Play, Pause, SkipForward, SkipBack, Repeat, Eye, EyeOff, Loader2, Sparkles, X, BookOpen, Infinity as InfinityIcon, Volume2 } from 'lucide-react';
+import { AyahResponse, Ayah } from '../types';
+import { Play, Pause, SkipForward, SkipBack, Repeat, Eye, EyeOff, Loader2, Sparkles, X, BookOpen, Mic, Settings2, RotateCcw, Volume2, BookOpenText } from 'lucide-react';
 import { getTafseer } from '../services/geminiService';
+import { fetchFullSurah } from '../services/quranService';
 
 interface PlayerProps {
   ayahData: AyahResponse['data'] | null;
@@ -11,15 +12,33 @@ interface PlayerProps {
   onOpenSearch: () => void;
 }
 
+type ViewMode = 'read' | 'blur' | 'hidden';
+
 const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, onOpenSearch }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Playback State
   const [isPlaying, setIsPlaying] = useState(false);
-  const [repeatMode, setRepeatMode] = useState<'off' | 'ayah' | 'infinite' | number>('off');
-  const [repeatCount, setRepeatCount] = useState(0); 
-  const [isBlindMode, setIsBlindMode] = useState(false);
+  
+  // Hifz Engine State
+  const [isHifzMode, setIsHifzMode] = useState(true); // Default to Hifz tools visible
+  const [repeatCount, setRepeatCount] = useState<number>(3); 
+  const [currentRepeat, setCurrentRepeat] = useState(0); 
+  const [isLooping, setIsLooping] = useState(false);
+  const [echoMode, setEchoMode] = useState(false); // Talqeen Mode
+  const [viewMode, setViewMode] = useState<ViewMode>('read');
+  
+  // Echo/Talqeen Logic
+  const [isUserTurn, setIsUserTurn] = useState(false);
+  const [userTurnProgress, setUserTurnProgress] = useState(0);
+
+  // Aux Features
   const [tafseer, setTafseer] = useState<string | null>(null);
   const [loadingTafseer, setLoadingTafseer] = useState(false);
+  const [showFullSurah, setShowFullSurah] = useState(false);
+  const [fullSurahAyahs, setFullSurahAyahs] = useState<Ayah[]>([]);
+  const [loadingFullSurah, setLoadingFullSurah] = useState(false);
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -27,78 +46,102 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
         if (e.code === 'Space') {
             e.preventDefault();
             togglePlay();
-        } else if (e.code === 'ArrowLeft') {
-            onNext();
-        } else if (e.code === 'ArrowRight') {
-            onPrev();
-        }
+        } else if (e.code === 'ArrowLeft') onNext();
+        else if (e.code === 'ArrowRight') onPrev();
+        else if (e.code === 'KeyR') handleMistake(); // R for Reset/Retry
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, onNext, onPrev]);
 
-  // Auto-scroll logic (scroll to top on new ayah)
+  // Reset state on new Ayah
   useEffect(() => {
+    if (audioRef.current && ayahData && !isLoading) {
+      setCurrentRepeat(0);
+      setIsUserTurn(false);
+      setUserTurnProgress(0);
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => console.log("Autoplay blocked", e));
+      }
+    }
+    // Auto scroll to center text
     if (textContainerRef.current) {
         textContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [ayahData?.numberInSurah]);
-
-  // Auto-play
-  useEffect(() => {
-    if (audioRef.current && ayahData && !isLoading) {
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => setIsPlaying(true))
-          .catch((error) => {
-            console.log("Auto-play prevented:", error);
-            setIsPlaying(false);
-          });
-      }
-    }
   }, [ayahData, isLoading]);
 
+  // Echo Timer
   useEffect(() => {
-    setTafseer(null);
-    setRepeatCount(0); 
-  }, [ayahData]);
+    let interval: number;
+    if (isUserTurn && echoMode && audioRef.current) {
+        // Give user slightly more time than the reciter (1.2x)
+        const duration = audioRef.current.duration * 1200; 
+        const step = 50;
+        let elapsed = 0;
+
+        interval = window.setInterval(() => {
+            elapsed += step;
+            const progress = (elapsed / duration) * 100;
+            setUserTurnProgress(progress);
+
+            if (elapsed >= duration) {
+                clearInterval(interval);
+                setIsUserTurn(false);
+                handleLoopLogic(); // Proceed after user turn
+            }
+        }, step);
+    }
+    return () => clearInterval(interval);
+  }, [isUserTurn, echoMode]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      setIsUserTurn(false); // Cancel echo if paused
     } else {
       audioRef.current.play();
       setIsPlaying(true);
     }
   };
 
-  const handleRepeatToggle = () => {
-      if (repeatMode === 'off') setRepeatMode(3);
-      else if (repeatMode === 3) setRepeatMode('infinite');
-      else setRepeatMode('off');
+  const handleLoopLogic = () => {
+      if (!isLooping) {
+          onNext();
+          return;
+      }
+      if (currentRepeat < repeatCount - 1) {
+          setCurrentRepeat(prev => prev + 1);
+          audioRef.current?.play();
+          setIsPlaying(true);
+      } else {
+          onNext();
+      }
   };
 
   const handleEnded = () => {
-    if (repeatMode === 'infinite') {
-      audioRef.current?.play();
-      setRepeatCount(prev => prev + 1);
-      return;
+    setIsPlaying(false);
+    if (echoMode && isLooping) {
+        // Start Talqeen phase
+        setIsUserTurn(true);
+    } else {
+        handleLoopLogic();
     }
-    if (typeof repeatMode === 'number') {
-        if (repeatCount < repeatMode - 1) {
-            audioRef.current?.play();
-            setRepeatCount(prev => prev + 1);
-        } else {
-            setRepeatMode('off');
-            setRepeatCount(0);
-            onNext();
-        }
-        return;
-    }
-    onNext();
+  };
+
+  const handleMistake = () => {
+      // The "Panic Button" logic
+      // Reset loops for this ayah, restart immediately
+      if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+          setIsPlaying(true);
+          setIsUserTurn(false); // Cancel echo
+          setCurrentRepeat(0); // Reset progress, force mastery
+      }
   };
 
   const fetchTafseer = async () => {
@@ -109,210 +152,235 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
     setLoadingTafseer(false);
   };
 
+  const handleOpenFullSurah = async () => {
+    setShowFullSurah(true);
+    if (ayahData && fullSurahAyahs.length === 0) {
+        setLoadingFullSurah(true);
+        const ayahs = await fetchFullSurah(ayahData.surah.number);
+        setFullSurahAyahs(ayahs);
+        setLoadingFullSurah(false);
+    }
+  };
+
+  const cycleViewMode = () => {
+      if (viewMode === 'read') setViewMode('blur');
+      else if (viewMode === 'blur') setViewMode('hidden');
+      else setViewMode('read');
+  };
+
   if (!ayahData) return null;
 
   return (
     <>
       <div className="h-full w-full flex flex-col relative z-10">
         
-        {/* --- Header Badge --- */}
-        <div className="flex-none pt-2 flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-700 z-20">
-            <div className="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2 text-amber-100/80 hover:text-amber-100 hover:bg-white/5 transition-all cursor-pointer group" onClick={onOpenSearch}>
-                <span className="text-[10px] tracking-widest uppercase font-bold opacity-70 group-hover:opacity-100">{ayahData.surah.englishName}</span>
-                <div className="w-1 h-1 rounded-full bg-amber-500"></div>
-                <span className="font-quran text-sm group-hover:scale-105 transition-transform">{ayahData.surah.name}</span>
-            </div>
+        {/* --- Header Info --- */}
+        <div className="flex-none pt-4 flex justify-center z-20">
+            <button 
+                onClick={onOpenSearch}
+                className="bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 text-amber-100 hover:bg-white/10 transition-all group"
+            >
+                <span className="text-xs text-amber-500 font-bold tracking-widest uppercase">{ayahData.surah.englishName}</span>
+                <span className="w-1 h-1 bg-white/20 rounded-full"></span>
+                <span className="font-quran text-lg group-hover:scale-105 transition-transform">{ayahData.surah.name}</span>
+            </button>
         </div>
 
-        {/* --- The Stage (Text Area) --- */}
-        {/* We use flex-grow to take up all space, but the internal div is the scroll container */}
-        <div className="flex-1 w-full relative min-h-0">
-            {/* Ambient Light behind text */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vw] bg-amber-500/5 blur-[100px] rounded-full pointer-events-none mix-blend-screen"></div>
-
-            {/* Scroll Container */}
+        {/* --- Main Content Area --- */}
+        <div className="flex-1 w-full relative min-h-0 flex flex-col">
+            
+            {/* Scrollable Text Area */}
             <div 
                 ref={textContainerRef}
-                className="w-full h-full overflow-y-auto custom-scrollbar px-6 md:px-12 flex flex-col"
+                className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-12 relative"
             >
-                {/* 
-                   Content Wrapper:
-                   min-h-full: Ensures that if content is short, flex-center works (centering vertically).
-                   py-32: Adds enough padding top/bottom so text doesn't hit edges or get hidden by dock/header when scrolling.
-                   justify-center: Centers text vertically if it's smaller than the container.
-                */}
-                <div className="flex-grow min-h-full flex flex-col items-center justify-center py-32 md:py-24">
+                <div className="min-h-full flex flex-col items-center justify-center py-20 md:py-32">
                     
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center gap-6 opacity-60">
-                             <div className="relative">
-                                <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20 animate-pulse"></div>
-                                <Loader2 className="w-10 h-10 text-amber-400 animate-spin relative z-10" />
-                             </div>
-                            <span className="text-amber-200/50 text-xs tracking-[0.3em] font-light animate-pulse">LOADING</span>
+                        <div className="flex flex-col items-center gap-4 animate-pulse">
+                            <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+                            <span className="text-xs text-amber-500/50 tracking-[0.2em]">جاري التحميل</span>
                         </div>
                     ) : (
-                        <div className={`relative w-full max-w-4xl transition-all duration-1000 ease-out transform ${isLoading ? 'translate-y-8 opacity-0 blur-sm' : 'translate-y-0 opacity-100 blur-0'}`}>
+                        <div className={`relative w-full max-w-4xl text-center transition-all duration-500 ${isUserTurn ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}>
                             
-                            {/* Hifz Status Floating Pill */}
-                            {repeatMode !== 'off' && (
-                                <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 glass-panel rounded-full text-[10px] font-medium text-amber-200 shadow-[0_0_20px_rgba(251,191,36,0.1)] animate-in zoom-in duration-300">
-                                    <Repeat className="w-3 h-3 text-amber-500" />
-                                    <span>
-                                        {repeatMode === 'infinite' ? 'Looping' : `${repeatCount + 1} / ${repeatMode}`}
-                                    </span>
+                            {/* Echo Mode Status Indicator */}
+                            {isUserTurn && (
+                                <div className="absolute -top-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 w-full max-w-sm animate-in fade-in slide-in-from-bottom-2">
+                                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-1.5 rounded-full flex items-center gap-2 text-sm font-bold shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                                        <Mic className="w-4 h-4 animate-pulse" />
+                                        <span>دورك الآن.. ردد الآية</span>
+                                    </div>
+                                    {/* Progress Bar */}
+                                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]" 
+                                            style={{ width: `${userTurnProgress}%`, transition: 'width 0.1s linear' }}
+                                        ></div>
+                                    </div>
                                 </div>
                             )}
 
-                            <div 
-                                className={`transition-all duration-700 ${
-                                    isBlindMode 
-                                    ? 'blur-xl hover:blur-none opacity-30 hover:opacity-100 cursor-help select-none grayscale hover:grayscale-0' 
-                                    : 'blur-0 opacity-100 text-glow'
+                            {/* Loop Indicator */}
+                            {isLooping && !isUserTurn && (
+                                <div className="absolute -top-16 left-1/2 -translate-x-1/2 text-amber-500/50 text-xs font-mono tracking-widest bg-black/20 px-3 py-1 rounded-full border border-white/5">
+                                    LOOP {currentRepeat + 1}/{repeatCount}
+                                </div>
+                            )}
+
+                            {/* The Ayah Text */}
+                            <h1 
+                                className={`font-quran text-[2rem] sm:text-4xl md:text-5xl lg:text-[4rem] leading-[2.5] text-white transition-all duration-500 ${
+                                    viewMode === 'hidden' ? 'blur-2xl opacity-0 hover:opacity-100 hover:blur-0 cursor-pointer' : ''
                                 }`}
+                                dir="rtl"
+                                style={{ textWrap: 'balance' }}
                             >
-                                <h1 
-                                    className="font-quran text-center text-[2.2rem] sm:text-4xl md:text-5xl lg:text-6xl xl:text-[5.5rem] leading-[1.9] sm:leading-[2.2] md:leading-[2.4] lg:leading-[2.5] font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/95 drop-shadow-2xl py-2"
-                                    style={{ 
-                                        textWrap: 'balance',
-                                    }}
-                                    dir="rtl"
-                                >
-                                    {ayahData.text}
-                                    {/* Elegant Verse End Symbol */}
-                                    <span className="inline-flex items-center justify-center w-[0.8em] h-[0.8em] mx-3 align-middle relative text-amber-500/80 select-none group cursor-default">
-                                        <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 fill-current opacity-100 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]">
-                                             <path d="M50 0 L62 12 L85 12 L85 35 L100 50 L85 65 L85 88 L62 88 L50 100 L38 88 L15 88 L15 65 L0 50 L15 35 L15 12 L38 12 Z" fill="none" stroke="currentColor" strokeWidth="3" />
-                                        </svg>
-                                        <span className="relative z-10 text-[0.35em] font-sans font-bold pt-1 text-amber-100">{ayahData.numberInSurah}</span>
-                                    </span>
-                                </h1>
-                            </div>
+                                {viewMode === 'read' && ayahData.text}
+                                
+                                {viewMode === 'blur' && (
+                                    <>
+                                        {/* Show first word, blur rest */}
+                                        <span className="text-amber-200">{ayahData.text.split(' ')[0]}</span>
+                                        {' '}
+                                        <span className="blur-md opacity-30 transition-all duration-300 hover:blur-0 hover:opacity-100 cursor-help">
+                                            {ayahData.text.split(' ').slice(1).join(' ')}
+                                        </span>
+                                    </>
+                                )}
+
+                                {viewMode === 'hidden' && ayahData.text}
+
+                                {/* Ayah End Symbol */}
+                                <span className="inline-flex items-center justify-center w-[0.7em] h-[0.7em] mx-2 align-middle relative text-amber-500/60 select-none">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full absolute inset-0 fill-current opacity-100">
+                                            <path d="M50 0 L62 12 L85 12 L85 35 L100 50 L85 65 L85 88 L62 88 L50 100 L38 88 L15 88 L15 65 L0 50 L15 35 L15 12 L38 12 Z" fill="none" stroke="currentColor" strokeWidth="3" />
+                                    </svg>
+                                    <span className="relative z-10 text-[0.4em] font-sans font-bold pt-1 text-amber-100">{ayahData.numberInSurah}</span>
+                                </span>
+                            </h1>
                         </div>
                     )}
                 </div>
             </div>
         </div>
 
-      </div>
-
-      {/* --- The Crystal Dock --- */}
-      <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-        {/* The Dock Itself */}
-        <div className="pointer-events-auto glass-panel rounded-[2rem] p-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex items-center gap-1 md:gap-4 relative overflow-hidden ring-1 ring-white/10 group hover:ring-white/20 transition-all duration-500">
+        {/* --- Genius Control Bar (Bottom) --- */}
+        <div className="flex-none p-4 pb-8 flex flex-col items-center justify-center gap-6 relative z-50">
             
-            {/* Visualizer Background Effect inside Dock */}
-            {isPlaying && (
-                 <div className="absolute inset-0 z-0 opacity-15 pointer-events-none flex items-end justify-center gap-0.5 px-8">
-                    {[...Array(20)].map((_, i) => (
-                        <div key={i} className="w-1.5 bg-gradient-to-t from-amber-500 to-transparent rounded-t-full" style={{ height: `${20 + Math.random() * 80}%`, animation: `pulse 0.5s infinite ${i * 0.05}s alternate` }}></div>
-                    ))}
-                </div>
-            )}
-
-            {/* Left Controls: Learning Tools */}
-            <div className="flex items-center gap-0.5 md:gap-1 z-10">
-                 <button 
-                    onClick={handleRepeatToggle}
-                    className={`relative w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${repeatMode !== 'off' ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/50' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                 >
-                    {repeatMode === 'infinite' ? <InfinityIcon className="w-4 h-4 md:w-5 md:h-5" /> : <Repeat className="w-4 h-4 md:w-5 md:h-5" />}
-                 </button>
-                 <button 
-                    onClick={() => setIsBlindMode(!isBlindMode)}
-                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${isBlindMode ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-500/50' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                 >
-                    {isBlindMode ? <EyeOff className="w-4 h-4 md:w-5 md:h-5" /> : <Eye className="w-4 h-4 md:w-5 md:h-5" />}
-                 </button>
-            </div>
-
-            {/* Vertical Separator */}
-            <div className="w-px h-6 bg-white/10 mx-1 md:mx-2 z-10"></div>
-
-            {/* Center Controls: Playback */}
-            <div className="flex items-center gap-2 md:gap-3 z-10">
-                <button onClick={onPrev} className="p-2 md:p-3 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95">
-                    <SkipBack className="w-5 h-5 md:w-6 md:h-6 fill-current" />
-                </button>
+            {/* 1. Hifz Tools (Top Row) */}
+            <div className="flex items-center gap-4 bg-[#0f172a] border border-white/10 rounded-2xl p-2 shadow-2xl">
                 
-                <button 
-                    onClick={togglePlay}
-                    className="w-14 h-14 md:w-16 md:h-16 bg-white text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_50px_rgba(251,191,36,0.3)] relative overflow-hidden"
-                >
-                    <div className="absolute inset-0 bg-gradient-to-tr from-amber-100 via-white to-white opacity-90"></div>
-                    {isLoading ? (
-                        <Loader2 className="w-6 h-6 md:w-7 md:h-7 animate-spin relative z-10 text-black" />
-                    ) : isPlaying ? (
-                        <Pause className="w-6 h-6 md:w-7 md:h-7 fill-black relative z-10" />
-                    ) : (
-                        <Play className="w-6 h-6 md:w-7 md:h-7 fill-black relative z-10 ml-1" />
+                {/* Loop Controls */}
+                <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+                    <button 
+                        onClick={() => setIsLooping(!isLooping)}
+                        className={`p-2 rounded-lg transition-colors ${isLooping ? 'bg-amber-500 text-black' : 'text-white/40 hover:text-white'}`}
+                        title="تفعيل التكرار"
+                    >
+                        <Repeat className="w-4 h-4" />
+                    </button>
+                    {isLooping && (
+                        <div className="flex items-center gap-2">
+                             <button onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">-</button>
+                             <span className="text-xs font-mono w-4 text-center">{repeatCount}</span>
+                             <button onClick={() => setRepeatCount(Math.min(20, repeatCount + 1))} className="text-white/50 hover:text-white text-lg font-bold px-1">+</button>
+                        </div>
                     )}
+                </div>
+
+                {/* Echo Mode */}
+                <button 
+                    onClick={() => setEchoMode(!echoMode)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                        echoMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                    }`}
+                    title="نظام التلقين (صمت للترديد)"
+                >
+                    <Mic className="w-4 h-4" />
+                    <span className="text-[10px] font-bold">تلقين</span>
                 </button>
-                
-                <button onClick={onNext} className="p-2 md:p-3 text-white/50 hover:text-white transition-colors hover:scale-110 active:scale-95">
-                    <SkipForward className="w-5 h-5 md:w-6 md:h-6 fill-current" />
+
+                {/* View Mode (Eye) */}
+                <button 
+                    onClick={cycleViewMode}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                        viewMode !== 'read' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                    }`}
+                    title="مستويات الإخفاء"
+                >
+                    {viewMode === 'read' ? <Eye className="w-4 h-4" /> : viewMode === 'blur' ? <span className="text-xs font-bold">1st</span> : <EyeOff className="w-4 h-4" />}
+                </button>
+
+                 {/* Mistake Button (Panic) */}
+                 <button 
+                    onClick={handleMistake}
+                    className="p-2 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    title="أعد الآية (أخطأت)"
+                >
+                    <RotateCcw className="w-4 h-4" />
                 </button>
             </div>
 
-            {/* Vertical Separator */}
-            <div className="w-px h-6 bg-white/10 mx-1 md:mx-2 z-10"></div>
+            {/* 2. Main Playback Controls (Bottom Row) */}
+            <div className="flex items-center gap-6">
+                 <button onClick={onPrev} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipBack className="w-6 h-6" /></button>
+                 
+                 <button 
+                    onClick={togglePlay}
+                    className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 ${
+                        isPlaying ? 'bg-amber-500 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/20 hover:scale-105'
+                    }`}
+                 >
+                    {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
+                 </button>
 
-            {/* Right Controls: Context */}
-            <div className="flex items-center gap-0.5 md:gap-1 z-10">
-                 <button 
-                    onClick={onOpenSearch}
-                    className="w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/5 transition-all duration-300"
-                 >
-                    <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
-                 </button>
-                 <button 
-                    onClick={fetchTafseer}
-                    className={`w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${tafseer ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-                    disabled={loadingTafseer}
-                 >
-                    {loadingTafseer ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Sparkles className="w-4 h-4 md:w-5 md:h-5" />}
-                 </button>
+                 <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipForward className="w-6 h-6" /></button>
             </div>
+
+            {/* 3. Extra Tools (Bottom Links) */}
+            <div className="flex items-center gap-4 text-white/30">
+                <button onClick={handleOpenFullSurah} className="hover:text-amber-400 transition-colors p-2" title="قراءة السورة"><BookOpenText className="w-5 h-5" /></button>
+                <button onClick={fetchTafseer} className="hover:text-amber-400 transition-colors p-2" title="تفسير"><Sparkles className="w-5 h-5" /></button>
+            </div>
+
         </div>
       </div>
 
-      {/* --- Tafseer Overlay (Slide Up Sheet) --- */}
-      {tafseer && (
-        <div 
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-end md:items-center justify-center p-0 md:p-6 animate-in fade-in duration-300"
-            onClick={() => setTafseer(null)}
-        >
-            <div 
-                className="w-full md:max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-t-[2rem] md:rounded-[2rem] p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 duration-500 relative overflow-hidden ring-1 ring-white/10"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Glow Background */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none"></div>
-
-                <div className="flex items-center justify-between mb-8 relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                            <Sparkles className="w-5 h-5 text-emerald-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-white font-quran">التفسير الميسر</h3>
-                            <p className="text-[10px] text-emerald-400/60 uppercase tracking-widest">AI Powered</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => setTafseer(null)}
-                        className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
-                    >
-                        <X className="w-5 h-5 text-white/70" />
-                    </button>
+      {/* --- Full Surah Overlay --- */}
+      {showFullSurah && (
+        <div className="fixed inset-0 z-[60] bg-[#020617] flex flex-col animate-in slide-in-from-bottom-10 duration-300">
+             <div className="flex-none p-4 flex justify-between items-center border-b border-white/5 bg-[#020617]/80 backdrop-blur">
+                 <h2 className="text-amber-100 font-quran text-xl">{ayahData.surah.name}</h2>
+                 <button onClick={() => setShowFullSurah(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10"><X className="w-5 h-5" /></button>
+             </div>
+             <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div className="max-w-3xl mx-auto font-quran text-2xl leading-[2.8] text-justify text-white/90" dir="rtl">
+                    {loadingFullSurah ? (
+                        <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-amber-500 animate-spin" /></div>
+                    ) : (
+                        fullSurahAyahs.map(ayah => (
+                            <span key={ayah.number} className={`${ayah.numberInSurah === ayahData.numberInSurah ? 'text-amber-400' : ''}`}>
+                                {ayah.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim()} 
+                                <span className="inline-flex items-center justify-center w-[1em] h-[1em] mx-1 align-middle text-amber-500/40 text-[0.6em] border border-current rounded-full">{ayah.numberInSurah}</span>
+                            </span>
+                        ))
+                    )}
                 </div>
-                
-                <div className="flex-1 overflow-y-auto custom-scrollbar pl-4 relative z-10">
-                     <div className="prose prose-invert prose-lg max-w-none text-right font-light leading-loose text-gray-200">
-                        {tafseer.split('\n').map((line, i) => (
-                            <p key={i} className="mb-4 text-lg md:text-xl border-r-2 border-emerald-500/20 pr-4">{line}</p>
-                        ))}
-                     </div>
+             </div>
+        </div>
+      )}
+
+      {/* --- Tafseer Overlay --- */}
+      {tafseer && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setTafseer(null)}>
+            <div className="bg-[#0f172a] border border-white/10 rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 className="text-emerald-400 font-bold flex items-center gap-2"><Sparkles className="w-4 h-4" /> التفسير الميسر</h3>
+                    <button onClick={() => setTafseer(null)}><X className="w-5 h-5 text-white/50" /></button>
+                </div>
+                <div className="p-6 overflow-y-auto custom-scrollbar">
+                    <p className="text-right text-lg leading-loose text-gray-200 font-light whitespace-pre-line">{tafseer}</p>
                 </div>
             </div>
         </div>
@@ -325,12 +393,12 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
           key={ayahData.audio}
           src={ayahData.audio}
           onEnded={handleEnded}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onError={(e) => {
-             console.error("Audio error", e);
-             setIsPlaying(false);
+          onPlay={() => {
+              setIsPlaying(true);
+              if(!isUserTurn) setIsUserTurn(false); 
           }}
+          onPause={() => !isUserTurn && setIsPlaying(false)}
+          onError={() => setIsPlaying(false)}
           className="hidden"
         />
       )}

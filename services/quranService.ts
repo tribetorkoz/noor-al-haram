@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../constants';
-import { Surah, AyahResponse } from '../types';
+import { Surah, AyahResponse, Ayah } from '../types';
 
 export const fetchSurahs = async (): Promise<Surah[]> => {
   try {
@@ -51,5 +51,21 @@ export const fetchAyahAudio = async (
   } catch (error) {
     console.error('Failed to fetch Ayah:', error);
     return null;
+  }
+};
+
+export const fetchFullSurah = async (surahNumber: number): Promise<Ayah[]> => {
+  try {
+    // Fetch the full surah with Uthmani script
+    const response = await fetch(`${API_BASE_URL}/surah/${surahNumber}/quran-uthmani`);
+    const data = await response.json();
+    
+    if (data.code === 200 && data.data && Array.isArray(data.data.ayahs)) {
+      return data.data.ayahs;
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch full surah", error);
+    return [];
   }
 };

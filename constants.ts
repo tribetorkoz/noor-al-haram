@@ -5,7 +5,7 @@ export const RECITERS: Reciter[] = [
     id: 'sudais',
     name: 'عبد الرحمن السديس',
     subfolder: 'Abdurrahmaan_As-Sudais_192kbps',
-    image: 'https://static.qurancentral.com/authors/abdur-rahman-as-sudais.jpg', 
+    image: 'https://saudipedia.com/saudipedia/uploads/images/2024/02/04/89199.jpg', 
   },
   {
     id: 'shuraim',

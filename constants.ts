@@ -5,31 +5,25 @@ export const RECITERS: Reciter[] = [
     id: 'sudais',
     name: 'عبد الرحمن السديس',
     subfolder: 'Abdurrahmaan_As-Sudais_192kbps',
-    image: 'https://static.qurancentral.com/authors/abdur-rahman-as-sudais.jpg', 
+    image: '/reciters/img1.jpg',   // الصورة 1
   },
   {
     id: 'shuraim',
     name: 'سعود الشريم',
     subfolder: 'Saood_ash-Shuraym_128kbps',
-    image: 'https://static.qurancentral.com/authors/saud-ash-shuraym.jpg',
+    image: '/reciters/img2.jpg',   // الصورة 2
   },
   {
     id: 'dosari',
     name: 'ياسر الدوسري',
     subfolder: 'Yasser_Ad-Dussary_128kbps',
-    image: 'https://static.qurancentral.com/authors/yasser-ad-dussary.jpg',
+    image: '/reciters/img3.jpg',   // الصورة 3
   },
   {
     id: 'budair',
     name: 'صلاح البدير',
     subfolder: 'Salah_Al_Budair_128kbps',
-    image: 'https://static.qurancentral.com/authors/salah-al-budair.jpg',
-  },
-  {
-    id: 'jaber',
-    name: 'علي جابر',
-    subfolder: 'Ali_Jaber_64kbps',
-    image: 'https://static.qurancentral.com/authors/ali-jaber.jpg',
+    image: '/reciters/img4.jpg',   // الصورة 4
   },
 ];
 

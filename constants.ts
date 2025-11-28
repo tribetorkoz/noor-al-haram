@@ -11,25 +11,25 @@ export const RECITERS: Reciter[] = [
     id: 'shuraim',
     name: 'سعود الشريم',
     subfolder: 'Saood_ash-Shuraym_128kbps',
-    image: 'https://static.qurancentral.com/authors/saud-ash-shuraym.jpg',
+    image: 'https://tecvitli.com/wp-content/uploads/2024/07/%D8%A7%D9%84%D8%B4%D9%8A%D8%AE-%D8%B3%D8%B9%D9%88%D8%AF-%D8%A7%D9%84%D8%B4%D8%B1%D9%8A%D9%85-1680073996-0.jpg',
   },
   {
     id: 'dosari',
     name: 'ياسر الدوسري',
     subfolder: 'Yasser_Ad-Dussary_128kbps',
-    image: 'https://static.qurancentral.com/authors/yasser-ad-dussary.jpg',
+    image: 'https://pbs.twimg.com/media/EZJ7zLvXkAA8Tdj.jpg',
   },
   {
     id: 'budair',
     name: 'صلاح البدير',
     subfolder: 'Salah_Al_Budair_128kbps',
-    image: 'https://static.qurancentral.com/authors/salah-al-budair.jpg',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Salah_Ibn_Mohammed_Al_Budair.jpg',
   },
   {
     id: 'jaber',
     name: 'علي جابر',
     subfolder: 'Ali_Jaber_64kbps',
-    image: 'https://static.qurancentral.com/authors/ali-jaber.jpg',
+    image: 'https://i.pinimg.com/564x/43/57/d3/4357d32cc152d4e3b8f8c37fd525b806.jpg',
   },
 ];
 

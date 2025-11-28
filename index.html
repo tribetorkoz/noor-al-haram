@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Noor Al-Haram - Genius Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Noor Al-Haram - Premium Experience</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,79 +11,101 @@
     <style>
       :root {
         --color-gold: #fbbf24;
-        --color-deep: #000000;
+        --color-deep: #020617;
       }
       body {
         font-family: 'Noto Kufi Arabic', sans-serif;
         background-color: var(--color-deep);
         color: #fff;
-        overflow: hidden; /* App-like feel */
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+        overflow: hidden; /* Prevent global scroll */
       }
       .font-quran {
         font-family: 'Amiri Quran', serif;
       }
       
-      /* Cinematic Background */
-      .cinematic-bg {
-        background: radial-gradient(circle at 50% 120%, #1e1b4b 0%, #000000 60%);
+      /* --- Living Aurora Background --- */
+      .aurora-container {
         position: fixed;
         inset: 0;
         z-index: -1;
+        background: #000000;
+        overflow: hidden;
+      }
+      .aurora-blob {
+        position: absolute;
+        filter: blur(90px);
+        opacity: 0.35; /* Reduced opacity for better text contrast */
+        animation: float 25s infinite alternate cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
+      .blob-1 {
+        top: -10%;
+        left: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: radial-gradient(circle, #0f172a 0%, transparent 60%); /* Deeper Blue */
+        animation-delay: -5s;
+      }
+      .blob-2 {
+        bottom: -20%;
+        right: -10%;
+        width: 70vw;
+        height: 70vw;
+        background: radial-gradient(circle, #271a08 0%, transparent 60%); /* Darker Brown/Gold */
+        animation-delay: 0s;
+      }
+      .blob-3 {
+        top: 30%;
+        left: 30%;
+        width: 50vw;
+        height: 50vw;
+        background: radial-gradient(circle, #451a03 0%, transparent 60%); /* Dark Amber */
+        opacity: 0.1;
+        animation-duration: 40s;
       }
       
-      /* Noise overlay for texture */
+      @keyframes float {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(20px, 30px) scale(1.05); }
+      }
+
+      /* Noise overlay */
       .noise {
         position: fixed;
         inset: 0;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
         z-index: -1;
         pointer-events: none;
+        mix-blend-mode: overlay;
       }
 
-      /* Floating Dock Animation */
-      @keyframes floatUp {
-        from { transform: translateY(100%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-      .animate-dock {
-        animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
+      /* --- Utilities --- */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 99px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(251, 191, 36, 0.4); }
 
-      /* Audio Visualizer Bars */
-      .bar {
-        width: 6px;
-        background: linear-gradient(to top, #fbbf24, #d97706);
-        border-radius: 999px;
-        animation: equalizer 1s ease-in-out infinite;
-      }
-      @keyframes equalizer {
-        0%, 100% { height: 10px; opacity: 0.3; }
-        50% { height: 40px; opacity: 1; }
+      /* Masking for fading edges */
+      .mask-linear-fade {
+        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
       }
       
-      /* Hide scrollbar for Stories bar */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      /* Glassmorphism Utilities */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
       }
       
-      /* Custom scrollbar for text areas */
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.3);
+      .text-glow {
+        text-shadow: 0 0 40px rgba(251, 191, 36, 0.1);
       }
     </style>
   <script type="importmap">
@@ -93,15 +115,19 @@
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.0.8"
   }
 }
 </script>
 </head>
   <body>
-    <div class="cinematic-bg"></div>
+    <div class="aurora-container">
+      <div class="aurora-blob blob-1"></div>
+      <div class="aurora-blob blob-2"></div>
+      <div class="aurora-blob blob-3"></div>
+    </div>
     <div class="noise"></div>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

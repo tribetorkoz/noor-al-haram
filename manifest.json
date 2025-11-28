@@ -1,0 +1,21 @@
+{
+  "short_name": "Noor",
+  "name": "Noor Al-Haram - Genius Hifz",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3344/3344843.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3344/3344843.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#020617",
+  "background_color": "#020617",
+  "orientation": "portrait"
+}

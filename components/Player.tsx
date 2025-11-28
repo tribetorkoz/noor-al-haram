@@ -21,11 +21,11 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
   // Playback State
   const [isPlaying, setIsPlaying] = useState(false);
   
-  // Hifz Engine State
+  // Hifz Engine State - ENABLED BY DEFAULT
   const [repeatCount, setRepeatCount] = useState<number>(3); 
   const [currentRepeat, setCurrentRepeat] = useState(0); 
-  const [isLooping, setIsLooping] = useState(false);
-  const [echoMode, setEchoMode] = useState(false); // Talqeen Mode
+  const [isLooping, setIsLooping] = useState(true); // Default ON
+  const [echoMode, setEchoMode] = useState(true); // Default ON (Talqeen Mode)
   const [viewMode, setViewMode] = useState<ViewMode>('read');
   
   // Echo/Talqeen Logic
@@ -123,7 +123,9 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
 
   const handleEnded = () => {
     setIsPlaying(false);
-    if (echoMode && isLooping) {
+    // Modified logic: Allow Talqeen (Echo) even if Looping is OFF
+    // This supports "Listen -> Repeat -> Next" flow
+    if (echoMode) {
         // Start Talqeen phase
         setIsUserTurn(true);
     } else {
@@ -195,6 +197,17 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                 ref={textContainerRef}
                 className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-12 relative flex items-center justify-center"
             >
+                {/* Reactive Ambience Light - Changes color based on state (Playing vs User Turn) */}
+                <div 
+                    className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px] transition-all duration-1000 -z-10 ${
+                        isUserTurn 
+                        ? 'bg-emerald-500/10' 
+                        : isPlaying 
+                            ? 'bg-amber-500/5' 
+                            : 'bg-transparent'
+                    }`}
+                />
+
                 <div className="w-full flex flex-col items-center justify-center py-20 md:py-10">
                     
                     {isLoading ? (
@@ -228,6 +241,13 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                                 </div>
                             )}
 
+                            {/* Basmalah Display (Only for Ayah 1 and not Tawbah) */}
+                            {ayahData.numberInSurah === 1 && ayahData.surah.number !== 9 && (
+                                <div className="mb-8 text-amber-500/50 font-quran text-3xl opacity-80 select-none">
+                                    بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                                </div>
+                            )}
+
                             {/* The Ayah Text - MASSIVE ON DESKTOP */}
                             <h1 
                                 className={`font-quran text-[2rem] sm:text-4xl md:text-[3.5rem] lg:text-[5rem] leading-[2.6] md:leading-[2.8] text-white transition-all duration-500 ${
@@ -236,20 +256,20 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                                 dir="rtl"
                                 style={{ textWrap: 'balance' }}
                             >
-                                {viewMode === 'read' && ayahData.text}
+                                {viewMode === 'read' && ayahData.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim()}
                                 
                                 {viewMode === 'blur' && (
                                     <>
                                         {/* Show first word, blur rest */}
-                                        <span className="text-amber-200">{ayahData.text.split(' ')[0]}</span>
+                                        <span className="text-amber-200">{ayahData.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim().split(' ')[0]}</span>
                                         {' '}
                                         <span className="blur-md opacity-30 transition-all duration-300 hover:blur-0 hover:opacity-100 cursor-help">
-                                            {ayahData.text.split(' ').slice(1).join(' ')}
+                                            {ayahData.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim().split(' ').slice(1).join(' ')}
                                         </span>
                                     </>
                                 )}
 
-                                {viewMode === 'hidden' && ayahData.text}
+                                {viewMode === 'hidden' && ayahData.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim()}
 
                                 {/* Ayah End Symbol */}
                                 <span className="inline-flex items-center justify-center w-[0.7em] h-[0.7em] mx-2 align-middle relative text-amber-500/60 select-none">
@@ -277,12 +297,20 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                     
                     <button 
                         onClick={togglePlay}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 ${
+                        className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10 ${
                             isPlaying ? 'bg-amber-500 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/20 hover:scale-105'
                         }`}
                     >
                         {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
                     </button>
+
+                    {/* Audio Visualizer Bars (Next to Play Button) */}
+                    <div className={`hidden md:flex gap-1 h-8 items-center ${isPlaying ? '' : 'paused'}`}>
+                        <div className="bar"></div>
+                        <div className="bar"></div>
+                        <div className="bar"></div>
+                        <div className="bar"></div>
+                    </div>
 
                     <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90"><SkipForward className="w-6 h-6" /></button>
                 </div>

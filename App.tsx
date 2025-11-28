@@ -50,30 +50,65 @@ const SurahItem: React.FC<SurahItemProps> = ({ surah, compact = false, isSelecte
 
 const App: React.FC = () => {
   const [reciters] = useState<Reciter[]>(RECITERS);
-  const [selectedReciter, setSelectedReciter] = useState<Reciter>(RECITERS[0]);
   const [surahs, setSurahs] = useState<Surah[]>([]);
-  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
-  const [currentAyahNum, setCurrentAyahNum] = useState<number>(1);
   const [ayahData, setAyahData] = useState<AyahResponse['data'] | null>(null);
   const [isLoadingAyah, setIsLoadingAyah] = useState(false);
   
+  // -- State with Persistence --
+  const [selectedReciter, setSelectedReciter] = useState<Reciter>(() => {
+      const saved = localStorage.getItem('noor_reciter');
+      if (saved) {
+          const found = RECITERS.find(r => r.id === saved);
+          if (found) return found;
+      }
+      return RECITERS[0];
+  });
+
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+  const [currentAyahNum, setCurrentAyahNum] = useState<number>(1);
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Mobile Search State
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Initial Load
+  // 1. Load Surahs & Restore State
   useEffect(() => {
     const loadSurahs = async () => {
       const data = await fetchSurahs();
       setSurahs(data);
+      
+      // Restore saved progress
+      const savedSurahNum = localStorage.getItem('noor_surah');
+      const savedAyahNum = localStorage.getItem('noor_ayah');
+      
       if (data.length > 0) {
-        setSelectedSurah(data[0]); // Default to Fatiha
+        if (savedSurahNum) {
+            const foundSurah = data.find(s => s.number === parseInt(savedSurahNum));
+            setSelectedSurah(foundSurah || data[0]);
+        } else {
+            setSelectedSurah(data[0]); // Default to Fatiha
+        }
+
+        if (savedAyahNum) {
+            setCurrentAyahNum(parseInt(savedAyahNum));
+        }
       }
+      setIsInitialized(true);
     };
     loadSurahs();
   }, []);
 
-  // Fetch Ayah
+  // 2. Persist State Changes
+  useEffect(() => {
+      if (isInitialized && selectedSurah) {
+          localStorage.setItem('noor_reciter', selectedReciter.id);
+          localStorage.setItem('noor_surah', selectedSurah.number.toString());
+          localStorage.setItem('noor_ayah', currentAyahNum.toString());
+      }
+  }, [selectedReciter, selectedSurah, currentAyahNum, isInitialized]);
+
+  // 3. Fetch Ayah Audio
   useEffect(() => {
     if (selectedSurah) {
       const loadAyah = async () => {
@@ -98,7 +133,7 @@ const App: React.FC = () => {
 
   const handleSurahSelect = (surah: Surah) => {
     setSelectedSurah(surah);
-    setCurrentAyahNum(1);
+    setCurrentAyahNum(1); // Reset to first Ayah on new Surah
     setIsMobileSearchOpen(false);
   };
 
@@ -151,7 +186,7 @@ const App: React.FC = () => {
           
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-white/10 text-[10px] text-white/20 text-center">
-              V 2.0 • Genius Engine
+              V 2.5 • حفظ التقدم تلقائي
           </div>
       </aside>
 

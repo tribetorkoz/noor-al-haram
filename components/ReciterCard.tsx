@@ -5,9 +5,30 @@ interface ReciterCardProps {
   reciter: Reciter;
   isSelected: boolean;
   onClick: () => void;
+  variant?: 'default' | 'sidebar';
 }
 
-const ReciterCard: React.FC<ReciterCardProps> = ({ reciter, isSelected, onClick }) => {
+const ReciterCard: React.FC<ReciterCardProps> = ({ reciter, isSelected, onClick, variant = 'default' }) => {
+  if (variant === 'sidebar') {
+    return (
+      <button
+        onClick={onClick}
+        title={reciter.name}
+        className={`relative flex-none group transition-all duration-300 w-12 h-12 rounded-full overflow-hidden border-2 ${
+            isSelected 
+            ? 'border-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.4)] scale-110 z-10' 
+            : 'border-white/10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:scale-105 hover:border-white/30'
+        }`}
+      >
+         <img src={reciter.image} alt={reciter.name} className="w-full h-full object-cover" />
+         
+         {isSelected && (
+             <div className="absolute inset-0 bg-amber-500/10 mix-blend-overlay"></div>
+         )}
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={onClick}

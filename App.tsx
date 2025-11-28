@@ -4,7 +4,7 @@ import { RECITERS } from './constants';
 import { Surah, AyahResponse, Reciter } from './types';
 import ReciterCard from './components/ReciterCard';
 import Player from './components/Player';
-import { Search, X, BookOpen, Library, ChevronLeft } from 'lucide-react';
+import { Search, ChevronLeft, BookOpen } from 'lucide-react';
 
 interface SurahItemProps {
   surah: Surah;
@@ -142,18 +142,41 @@ const App: React.FC = () => {
       
       {/* =========================================================================
           DESKTOP SIDEBAR (Visible only on md+)
-          "The Library"
+          "The Library" - UNIFIED DASHBOARD
       ========================================================================== */}
-      <aside className="hidden md:flex flex-col w-80 lg:w-96 border-r border-white/10 bg-[#020617] h-full shadow-2xl z-50">
-          {/* Sidebar Header */}
-          <div className="p-6 border-b border-white/10 bg-[#0f172a]">
-              <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-amber-500/20 shadow-lg">
+      <aside className="hidden md:flex flex-col w-80 lg:w-96 border-r border-white/5 bg-[#0b1221] h-full shadow-[5px_0_30px_rgba(0,0,0,0.3)] z-50">
+          {/* Sidebar Header containing Brand + Reciters + Search */}
+          <div className="flex-none p-6 space-y-8 bg-gradient-to-b from-[#0f172a] to-[#0b1221] border-b border-white/5">
+              
+              {/* Brand */}
+              <div className="flex items-center gap-3 select-none">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.2)]">
                       <BookOpen className="text-black w-6 h-6" />
                   </div>
                   <div>
-                      <h1 className="font-quran text-xl font-bold text-amber-100 leading-none">نور الحرم</h1>
-                      <span className="text-xs text-amber-500/50 tracking-widest uppercase">Genius Hifz</span>
+                      <h1 className="font-quran text-2xl font-bold text-white leading-none mb-1">نور الحرم</h1>
+                      <span className="text-[10px] text-amber-500 font-bold tracking-[0.2em] uppercase opacity-80">Quran Workstation</span>
+                  </div>
+              </div>
+
+              {/* Reciters List (Integrated into Sidebar) */}
+              <div className="space-y-3">
+                  <div className="flex items-center justify-between px-1">
+                      <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">اختيار القارئ</span>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                      {reciters.map(reciter => (
+                          <ReciterCard 
+                              key={reciter.id}
+                              reciter={reciter}
+                              variant="sidebar"
+                              isSelected={selectedReciter.id === reciter.id}
+                              onClick={() => setSelectedReciter(reciter)}
+                          />
+                      ))}
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs font-quran text-amber-500">{selectedReciter.name}</span>
                   </div>
               </div>
 
@@ -162,17 +185,17 @@ const App: React.FC = () => {
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-amber-500 transition-colors pointer-events-none" />
                   <input 
                       type="text" 
-                      placeholder="بحث في السور..." 
+                      placeholder="بحث عن سورة..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-black/20 border border-white/10 rounded-lg py-2.5 pr-10 pl-4 text-sm focus:outline-none focus:border-amber-500/50 focus:bg-black/40 transition-all placeholder-white/20"
+                      className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pr-10 pl-4 text-sm focus:outline-none focus:border-amber-500/30 focus:bg-black/40 transition-all placeholder-white/20"
                   />
               </div>
           </div>
 
           {/* Surah List (Desktop) */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
-              <div className="text-xs text-white/30 font-bold uppercase tracking-widest mb-3 px-2">فهرس السور</div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
+              <div className="text-[10px] text-white/30 font-bold uppercase tracking-widest mb-3 px-2 pt-2">المكتبة القرآنية</div>
               {filteredSurahs.map(surah => (
                   <SurahItem 
                     key={surah.number} 
@@ -183,11 +206,6 @@ const App: React.FC = () => {
                   />
               ))}
           </div>
-          
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-white/10 text-[10px] text-white/20 text-center">
-              V 2.5 • حفظ التقدم تلقائي
-          </div>
       </aside>
 
 
@@ -195,13 +213,13 @@ const App: React.FC = () => {
           MAIN CONTENT AREA (Mobile & Desktop)
           "The Studio"
       ========================================================================== */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-gradient-to-br from-[#020617] to-[#0f172a]">
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#020617] md:bg-[url('https://grainy-gradients.vercel.app/noise.svg')]">
+        {/* Background Ambience */}
+        <div className="absolute inset-0 bg-gradient-to-tl from-[#020617] via-[#0f172a] to-[#020617] opacity-90 z-0"></div>
         
-        {/* --- Top Bar: Reciters --- */}
-        <div className="flex-none z-30 w-full pt-4 md:pt-6 pb-2 px-4 md:px-8">
-            {/* Desktop: Grid/Row layout, Mobile: Scrollable Row */}
-            <div className="flex justify-center md:justify-end w-full">
-                <div className="flex items-center gap-3 md:gap-4 overflow-x-auto no-scrollbar w-full max-w-5xl md:w-auto mask-linear-fade scroll-smooth py-2 md:bg-white/5 md:px-4 md:rounded-2xl md:border md:border-white/5">
+        {/* --- Top Bar: Reciters (MOBILE ONLY) --- */}
+        <div className="flex-none z-30 w-full pt-4 pb-2 px-4 md:hidden relative">
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar w-full mask-linear-fade scroll-smooth py-2">
                 {reciters.map(reciter => (
                     <ReciterCard 
                     key={reciter.id}
@@ -210,12 +228,11 @@ const App: React.FC = () => {
                     onClick={() => setSelectedReciter(reciter)}
                     />
                 ))}
-                </div>
             </div>
         </div>
 
         {/* --- Player Stage --- */}
-        <div className="flex-1 relative w-full h-full min-h-0">
+        <div className="flex-1 relative w-full h-full min-h-0 z-10">
             <Player 
                 ayahData={ayahData}
                 isLoading={isLoadingAyah}

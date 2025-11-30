@@ -16,24 +16,24 @@ interface SurahItemProps {
 const SurahItem: React.FC<SurahItemProps> = ({ surah, compact = false, isSelected, onSelect }) => (
   <button
       onClick={onSelect}
-      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group border relative overflow-hidden text-right ${
+      className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-300 group relative overflow-hidden text-right border border-transparent ${
           isSelected 
-          ? 'bg-amber-500 text-black border-amber-400 shadow-lg shadow-amber-500/20' 
-          : 'bg-white/5 hover:bg-white/10 border-white/5 text-white hover:border-white/20'
+          ? 'bg-amber-500/10 border-r-amber-500 border-r-2 shadow-[inset_0_0_20px_rgba(251,191,36,0.05)]' 
+          : 'hover:bg-white/5 hover:border-white/5'
       }`}
   >
       <div className="flex items-center gap-3 z-10 w-full justify-between">
           <div className="flex items-center gap-3">
                {/* Number Badge */}
-              <span className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold font-mono ${
-                  isSelected ? 'bg-black/20 text-black' : 'bg-black/30 text-amber-500'
+              <span className={`w-8 h-8 flex items-center justify-center rounded-md text-xs font-bold font-mono transition-colors ${
+                  isSelected ? 'bg-amber-500/20 text-amber-500' : 'bg-white/5 text-white/30 group-hover:bg-white/10'
               }`}>
                   {surah.number}
               </span>
               <div className="flex flex-col items-start">
-                  <h3 className={`font-bold font-quran leading-none mb-1 ${compact ? 'text-sm' : 'text-lg'}`}>{surah.name}</h3>
+                  <h3 className={`font-bold font-quran leading-none mb-1 transition-colors ${isSelected ? 'text-amber-100' : 'text-gray-300 group-hover:text-white'} ${compact ? 'text-sm' : 'text-lg'}`}>{surah.name}</h3>
                   {!compact && (
-                       <p className={`text-[10px] uppercase tracking-widest font-medium ${isSelected ? 'text-black/70' : 'text-white/40'}`}>
+                       <p className={`text-[10px] uppercase tracking-widest font-medium ${isSelected ? 'text-amber-500/60' : 'text-white/20'}`}>
                           {surah.englishName}
                        </p>
                   )}
@@ -41,7 +41,7 @@ const SurahItem: React.FC<SurahItemProps> = ({ surah, compact = false, isSelecte
           </div>
           
           {/* Verse Count */}
-          <span className={`text-[10px] ${isSelected ? 'text-black/60' : 'text-white/30'}`}>
+          <span className={`text-[10px] ${isSelected ? 'text-amber-500/50' : 'text-white/20'}`}>
               {surah.numberOfAyahs} آية
           </span>
       </div>
@@ -138,33 +138,36 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] bg-[#020617] text-white overflow-hidden flex flex-col md:flex-row">
+    <div className="fixed inset-0 w-full h-[100dvh] bg-[#020617] text-white overflow-hidden flex flex-col md:flex-row font-sans">
       
       {/* =========================================================================
           DESKTOP SIDEBAR (Visible only on md+)
           "The Library" - UNIFIED DASHBOARD
       ========================================================================== */}
-      <aside className="hidden md:flex flex-col w-80 lg:w-96 border-r border-white/5 bg-[#0b1221] h-full shadow-[5px_0_30px_rgba(0,0,0,0.3)] z-50">
+      <aside className="hidden md:flex flex-col w-80 lg:w-96 border-r border-white/5 bg-[#050a14] h-full shadow-[10px_0_40px_rgba(0,0,0,0.5)] z-50 relative">
+          <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none"></div>
+          
           {/* Sidebar Header containing Brand + Reciters + Search */}
-          <div className="flex-none p-6 space-y-8 bg-gradient-to-b from-[#0f172a] to-[#0b1221] border-b border-white/5">
+          <div className="flex-none p-6 space-y-8 bg-gradient-to-b from-[#0b1221] to-[#050a14] border-b border-white/5 relative z-10">
               
               {/* Brand */}
-              <div className="flex items-center gap-3 select-none">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shadow-[0_0_20px_rgba(251,191,36,0.2)]">
-                      <BookOpen className="text-black w-6 h-6" />
+              <div className="flex items-center gap-4 select-none">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-[0_4px_20px_rgba(251,191,36,0.3)]">
+                      <BookOpen className="text-[#050a14] w-6 h-6" />
                   </div>
                   <div>
-                      <h1 className="font-quran text-2xl font-bold text-white leading-none mb-1">نور الحرم</h1>
-                      <span className="text-[10px] text-amber-500 font-bold tracking-[0.2em] uppercase opacity-80">Quran Workstation</span>
+                      <h1 className="font-quran text-2xl font-bold text-white leading-none mb-1 tracking-wide">نور الحرم</h1>
+                      <span className="text-[9px] text-amber-500/80 font-bold tracking-[0.25em] uppercase block">Quran Workstation</span>
                   </div>
               </div>
 
               {/* Reciters List (Integrated into Sidebar) */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                   <div className="flex items-center justify-between px-1">
-                      <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">اختيار القارئ</span>
+                      <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">المقرئ المختار</span>
+                      <span className="text-xs font-quran text-amber-500">{selectedReciter.name}</span>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-5 gap-3">
                       {reciters.map(reciter => (
                           <ReciterCard 
                               key={reciter.id}
@@ -175,27 +178,27 @@ const App: React.FC = () => {
                           />
                       ))}
                   </div>
-                  <div className="text-center">
-                    <span className="text-xs font-quran text-amber-500">{selectedReciter.name}</span>
-                  </div>
               </div>
 
               {/* Search Box */}
               <div className="relative group">
-                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-amber-500 transition-colors pointer-events-none" />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-amber-500 transition-colors pointer-events-none" />
                   <input 
                       type="text" 
-                      placeholder="بحث عن سورة..." 
+                      placeholder="بحث في السور..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pr-10 pl-4 text-sm focus:outline-none focus:border-amber-500/30 focus:bg-black/40 transition-all placeholder-white/20"
+                      className="w-full bg-[#0f1623] border border-white/5 rounded-xl py-3 pr-10 pl-4 text-sm focus:outline-none focus:border-amber-500/20 focus:bg-[#131b2b] transition-all placeholder-white/10 text-white/80"
                   />
               </div>
           </div>
 
           {/* Surah List (Desktop) */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
-              <div className="text-[10px] text-white/30 font-bold uppercase tracking-widest mb-3 px-2 pt-2">المكتبة القرآنية</div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-0.5 relative z-10">
+              <div className="text-[10px] text-white/20 font-bold uppercase tracking-widest mb-3 px-2 pt-2 flex items-center gap-2">
+                  <span>المكتبة</span>
+                  <div className="h-px bg-white/5 flex-1"></div>
+              </div>
               {filteredSurahs.map(surah => (
                   <SurahItem 
                     key={surah.number} 
@@ -213,9 +216,15 @@ const App: React.FC = () => {
           MAIN CONTENT AREA (Mobile & Desktop)
           "The Studio"
       ========================================================================== */}
-      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#020617] md:bg-[url('https://grainy-gradients.vercel.app/noise.svg')]">
+      <main className="flex-1 flex flex-col relative h-full min-w-0 bg-[#020617] md:bg-[#030712] overflow-hidden">
+        {/* Subtle Noise Texture */}
+        <div className="absolute inset-0 bg-noise opacity-[0.05] pointer-events-none z-0"></div>
+        
         {/* Background Ambience */}
-        <div className="absolute inset-0 bg-gradient-to-tl from-[#020617] via-[#0f172a] to-[#020617] opacity-90 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-tl from-[#020617] via-[#080e1c] to-[#020617] z-0">
+             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+        </div>
         
         {/* --- Top Bar: Reciters (MOBILE ONLY) --- */}
         <div className="flex-none z-30 w-full pt-4 pb-2 px-4 md:hidden relative">

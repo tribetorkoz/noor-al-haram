@@ -16,8 +16,8 @@ const ReciterCard: React.FC<ReciterCardProps> = ({ reciter, isSelected, onClick,
         title={reciter.name}
         className={`relative flex-none group transition-all duration-300 w-12 h-12 rounded-full overflow-hidden border-2 ${
             isSelected 
-            ? 'border-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.4)] scale-110 z-10' 
-            : 'border-white/10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:scale-105 hover:border-white/30'
+            ? 'border-amber-500 shadow-[0_0_10px_rgba(251,191,36,0.3)] z-10' 
+            : 'border-white/5 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 hover:border-white/20'
         }`}
       >
          <img src={reciter.image} alt={reciter.name} className="w-full h-full object-cover" />

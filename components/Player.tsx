@@ -190,7 +190,7 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
         <div className="flex-none pt-2 flex justify-center z-20 md:hidden">
             <button 
                 onClick={onOpenSearch}
-                className="bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 text-amber-100 transition-all active:scale-95"
+                className="bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-3 text-amber-100 transition-all active:scale-95 backdrop-blur-md shadow-lg"
             >
                 <span className="text-xs text-amber-500 font-bold tracking-widest uppercase">{ayahData.surah.englishName}</span>
                 <span className="w-1 h-1 bg-white/20 rounded-full"></span>
@@ -207,12 +207,12 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                 className="flex-1 w-full h-full overflow-y-auto custom-scrollbar relative flex items-center justify-center"
             >
                 {/* Desktop "Floating Glass" Container */}
-                <div className="w-full h-full md:h-auto min-h-[50vh] flex flex-col items-center justify-center relative md:bg-[#0f172a]/40 md:backdrop-blur-xl md:border md:border-white/5 md:rounded-[2rem] md:shadow-[0_20px_50px_rgba(0,0,0,0.5)] md:p-12 lg:p-20 transition-all duration-700">
+                <div className="w-full h-full md:h-auto min-h-[50vh] flex flex-col items-center justify-center relative md:bg-[#0f172a]/30 md:backdrop-blur-2xl md:border md:border-white/5 md:rounded-[2rem] md:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_20px_50px_rgba(0,0,0,0.5)] md:p-12 lg:p-20 transition-all duration-700">
                     
                     {/* Background Ambience inside the card */}
                     <div 
-                        className={`absolute inset-0 rounded-[2rem] transition-all duration-1000 -z-10 opacity-30 ${
-                            isUserTurn ? 'bg-gradient-to-t from-emerald-900/30 to-transparent' : 'bg-gradient-to-t from-amber-900/20 to-transparent'
+                        className={`absolute inset-0 rounded-[2rem] transition-all duration-1000 -z-10 opacity-20 ${
+                            isUserTurn ? 'bg-gradient-to-t from-emerald-900/30 to-transparent' : 'bg-gradient-to-t from-amber-900/10 to-transparent'
                         }`}
                     />
 
@@ -242,18 +242,18 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
 
                             {/* Decorative Basmalah (Only for Surahs other than Fatiha and Tawbah, at Ayah 1) */}
                             {ayahData.numberInSurah === 1 && ayahData.surah.number !== 1 && ayahData.surah.number !== 9 && (
-                                <div className="mb-10 md:mb-16 text-amber-500/60 font-quran text-3xl md:text-5xl opacity-80 select-none drop-shadow-2xl">
+                                <div className="mb-10 md:mb-16 text-amber-500/60 font-quran text-3xl md:text-5xl opacity-80 select-none drop-shadow-lg">
                                     بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                                 </div>
                             )}
 
                             {/* The Ayah Text - MASSIVE TYPOGRAPHY */}
                             <h1 
-                                className={`font-quran text-[2rem] sm:text-4xl md:text-[4rem] lg:text-[5rem] xl:text-[6rem] leading-[2.6] md:leading-[2.5] text-white transition-all duration-500 ${
+                                className={`font-quran text-[2rem] sm:text-4xl md:text-[4rem] lg:text-[5rem] xl:text-[6rem] leading-[2.6] md:leading-[2.5] text-white transition-all duration-500 drop-shadow-2xl ${
                                     viewMode === 'hidden' ? 'blur-2xl opacity-0 hover:opacity-100 hover:blur-0 cursor-pointer' : ''
                                 }`}
                                 dir="rtl"
-                                style={{ textWrap: 'balance' }}
+                                style={{ textWrap: 'balance', textShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
                             >
                                 {viewMode === 'read' && currentText}
                                 
@@ -280,8 +280,12 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                             </h1>
 
                             {/* Info Label for Desktop */}
-                            <div className="hidden md:block mt-12 text-white/20 text-sm tracking-[0.5em] font-sans uppercase">
-                                {ayahData.surah.englishName} • VERSE {ayahData.numberInSurah}
+                            <div className="hidden md:flex justify-center mt-12 opacity-40 hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-4 text-xs tracking-[0.3em] font-sans uppercase border border-white/10 rounded-full px-6 py-2 bg-black/20 backdrop-blur-sm">
+                                    <span>{ayahData.surah.englishName}</span>
+                                    <span className="w-px h-3 bg-white/20"></span>
+                                    <span>VERSE {ayahData.numberInSurah}</span>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -292,7 +296,7 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
         {/* --- Slimline Workstation Dock (Desktop) vs Floating Dock (Mobile) --- */}
         <div className={`
             flex-none z-50 flex flex-col items-center justify-center gap-6 relative transition-all duration-500
-            p-4 pb-8 md:p-0 md:h-24 md:w-full md:border-t md:border-white/10 md:bg-[#020617]/90 md:backdrop-blur-xl
+            p-4 pb-8 md:p-0 md:h-24 md:w-full md:border-t md:border-white/5 md:bg-[#030712]/95 md:backdrop-blur-xl md:shadow-[0_-5px_30px_rgba(0,0,0,0.5)]
         `}>
             
             {/* Dock Container */}
@@ -300,86 +304,92 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
                 
                 {/* 1. Playback Controls (Center) */}
                 <div className="flex items-center gap-8 md:flex-1 md:justify-center">
-                    <button onClick={onPrev} className="text-white/40 hover:text-white transition-transform active:scale-90" title="الآية السابقة"><SkipBack className="w-6 h-6 md:w-5 md:h-5" /></button>
+                    <button onClick={onPrev} className="text-white/40 hover:text-white transition-transform active:scale-90 p-2 hover:bg-white/5 rounded-full" title="الآية السابقة"><SkipBack className="w-6 h-6 md:w-5 md:h-5" /></button>
                     
                     <button 
                         onClick={togglePlay}
                         className={`relative w-16 h-16 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-10 ${
-                            isPlaying ? 'bg-amber-500 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/20 hover:scale-105'
+                            isPlaying ? 'bg-gradient-to-tr from-amber-500 to-amber-400 text-black shadow-amber-500/20' : 'bg-white text-black shadow-white/10 hover:scale-105'
                         }`}
                     >
                         {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
                     </button>
 
-                    <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90" title="الآية التالية"><SkipForward className="w-6 h-6 md:w-5 md:h-5" /></button>
+                    <button onClick={onNext} className="text-white/40 hover:text-white transition-transform active:scale-90 p-2 hover:bg-white/5 rounded-full" title="الآية التالية"><SkipForward className="w-6 h-6 md:w-5 md:h-5" /></button>
                 </div>
 
                 {/* 2. Hifz Tools (Right on Desktop) */}
-                <div className="flex items-center gap-3 bg-[#0f172a] md:bg-transparent md:shadow-none md:border-none border border-white/10 rounded-2xl p-2 shadow-2xl md:order-3 md:justify-end md:w-1/3">
+                <div className="flex items-center gap-1 bg-[#0f172a] md:bg-transparent md:shadow-none md:border-none border border-white/10 rounded-2xl p-1 shadow-2xl md:order-3 md:justify-end md:w-1/3">
                     
-                    {/* Loop Controls */}
-                    <div className="flex items-center gap-2 pl-4 border-l border-white/10 md:border-white/20">
+                    <div className="flex items-center gap-2 p-1">
+                        {/* Mistake Button (Panic) */}
                         <button 
-                            onClick={() => setIsLooping(!isLooping)}
-                            className={`p-2 rounded-lg transition-colors ${isLooping ? 'bg-amber-500 text-black' : 'text-white/40 hover:text-white'}`}
-                            title="تفعيل التكرار"
+                            onClick={handleMistake}
+                            className="p-2.5 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors border border-transparent hover:border-red-500/20"
+                            title="أعد الآية (أخطأت)"
                         >
-                            <Repeat className="w-4 h-4" />
+                            <RotateCcw className="w-4 h-4" />
                         </button>
-                        {isLooping && (
-                            <div className="flex items-center gap-1 font-mono text-xs">
-                                <span className="text-white/50 px-1">x</span>
-                                <span className="text-amber-500 font-bold text-lg w-5 text-center">{repeatCount}</span>
-                                <div className="flex flex-col">
-                                    <button onClick={() => setRepeatCount(Math.min(20, repeatCount + 1))} className="text-white/40 hover:text-white leading-none text-[10px] mb-0.5">▲</button>
-                                    <button onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))} className="text-white/40 hover:text-white leading-none text-[10px]">▼</button>
+                        
+                        <div className="w-px h-6 bg-white/5 mx-1"></div>
+
+                        {/* View Mode (Eye) */}
+                        <button 
+                            onClick={cycleViewMode}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                                viewMode !== 'read' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                            }`}
+                            title="مستويات الإخفاء"
+                        >
+                            {viewMode === 'read' ? <Eye className="w-4 h-4" /> : viewMode === 'blur' ? <span className="text-xs font-bold">1st</span> : <EyeOff className="w-4 h-4" />}
+                        </button>
+
+                        {/* Echo Mode */}
+                        <button 
+                            onClick={() => setEchoMode(!echoMode)}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
+                                echoMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
+                            }`}
+                            title="نظام التلقين (صمت للترديد)"
+                        >
+                            <Mic className="w-4 h-4" />
+                            <span className="text-[10px] font-bold hidden xl:inline">تلقين</span>
+                        </button>
+
+                         <div className="w-px h-6 bg-white/5 mx-1"></div>
+
+                        {/* Loop Controls */}
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setIsLooping(!isLooping)}
+                                className={`p-2 rounded-lg transition-colors border border-transparent ${isLooping ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                                title="تفعيل التكرار"
+                            >
+                                <Repeat className="w-4 h-4" />
+                            </button>
+                            {isLooping && (
+                                <div className="flex items-center gap-1 font-mono text-xs bg-black/20 rounded px-1 py-0.5 border border-white/5">
+                                    <span className="text-amber-500 font-bold w-4 text-center">{repeatCount}</span>
+                                    <div className="flex flex-col -space-y-0.5">
+                                        <button onClick={() => setRepeatCount(Math.min(20, repeatCount + 1))} className="text-white/30 hover:text-white leading-none text-[8px] hover:bg-white/10 rounded">▲</button>
+                                        <button onClick={() => setRepeatCount(Math.max(1, repeatCount - 1))} className="text-white/30 hover:text-white leading-none text-[8px] hover:bg-white/10 rounded">▼</button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-
-                    {/* Echo Mode */}
-                    <button 
-                        onClick={() => setEchoMode(!echoMode)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
-                            echoMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
-                        }`}
-                        title="نظام التلقين (صمت للترديد)"
-                    >
-                        <Mic className="w-4 h-4" />
-                        <span className="text-[10px] font-bold hidden xl:inline">تلقين</span>
-                    </button>
-
-                    {/* View Mode (Eye) */}
-                    <button 
-                        onClick={cycleViewMode}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${
-                            viewMode !== 'read' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 'border-transparent text-white/40 hover:bg-white/5 hover:text-white'
-                        }`}
-                        title="مستويات الإخفاء"
-                    >
-                        {viewMode === 'read' ? <Eye className="w-4 h-4" /> : viewMode === 'blur' ? <span className="text-xs font-bold">1st</span> : <EyeOff className="w-4 h-4" />}
-                    </button>
-
-                    {/* Mistake Button (Panic) */}
-                    <button 
-                        onClick={handleMistake}
-                        className="p-2 rounded-lg text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        title="أعد الآية (أخطأت)"
-                    >
-                        <RotateCcw className="w-4 h-4" />
-                    </button>
                 </div>
 
                 {/* 3. Extra Tools (Left on Desktop) */}
-                <div className="flex items-center gap-2 text-white/30 md:order-1 md:justify-start md:w-1/3">
-                    <button onClick={handleOpenFullSurah} className="flex items-center gap-2 hover:text-amber-400 transition-colors p-2 px-3 hover:bg-white/5 rounded-lg group">
+                <div className="flex items-center gap-3 text-white/30 md:order-1 md:justify-start md:w-1/3">
+                    <button onClick={handleOpenFullSurah} className="flex items-center gap-2 text-white/50 hover:text-amber-400 transition-colors py-2 px-3 hover:bg-white/5 rounded-lg group border border-transparent hover:border-white/5">
                         <BookOpenText className="w-5 h-5" />
-                        <span className="text-xs font-medium hidden lg:inline group-hover:text-amber-400/80 transition-colors">قراءة السورة</span>
+                        <span className="text-xs font-medium hidden lg:inline group-hover:text-amber-400 transition-colors">قراءة السورة</span>
                     </button>
-                    <button onClick={fetchTafseer} className="flex items-center gap-2 hover:text-emerald-400 transition-colors p-2 px-3 hover:bg-white/5 rounded-lg group">
+                    <div className="w-px h-6 bg-white/5 hidden md:block"></div>
+                    <button onClick={fetchTafseer} className="flex items-center gap-2 text-white/50 hover:text-emerald-400 transition-colors py-2 px-3 hover:bg-white/5 rounded-lg group border border-transparent hover:border-white/5">
                         <Sparkles className="w-5 h-5" />
-                        <span className="text-xs font-medium hidden lg:inline group-hover:text-emerald-400/80 transition-colors">التفسير الميسر</span>
+                        <span className="text-xs font-medium hidden lg:inline group-hover:text-emerald-400 transition-colors">التفسير الميسر</span>
                     </button>
                 </div>
             </div>
@@ -389,25 +399,30 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
 
       {/* --- Full Surah Overlay --- */}
       {showFullSurah && (
-        <div className="fixed inset-0 z-[60] bg-[#020617] flex flex-col animate-in slide-in-from-bottom-10 duration-300">
-             <div className="flex-none p-4 md:p-6 flex justify-between items-center border-b border-white/5 bg-[#020617]/80 backdrop-blur">
-                 <h2 className="text-amber-100 font-quran text-2xl md:text-3xl">{ayahData.surah.name}</h2>
-                 <button onClick={() => setShowFullSurah(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><X className="w-6 h-6" /></button>
+        <div className="fixed inset-0 z-[60] bg-[#020617] flex flex-col animate-in slide-in-from-bottom-5 duration-300">
+             <div className="flex-none p-4 md:p-6 flex justify-between items-center border-b border-white/5 bg-[#0f172a]/95 backdrop-blur shadow-2xl z-10">
+                 <div className="flex items-center gap-4">
+                    <h2 className="text-amber-100 font-quran text-2xl md:text-3xl">{ayahData.surah.name}</h2>
+                    <span className="text-xs text-white/30 uppercase tracking-widest border border-white/10 rounded px-2 py-0.5">{ayahData.surah.englishName}</span>
+                 </div>
+                 <button onClick={() => setShowFullSurah(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"><X className="w-6 h-6" /></button>
              </div>
-             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12">
+             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12 bg-noise">
                 <div className="max-w-4xl mx-auto font-quran text-2xl md:text-4xl leading-[2.8] md:leading-[3] text-justify text-white/90" dir="rtl">
                     {loadingFullSurah ? (
                         <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 text-amber-500 animate-spin" /></div>
                     ) : (
-                        fullSurahAyahs.map(ayah => (
-                            <span key={ayah.number} className={`${ayah.numberInSurah === ayahData.numberInSurah ? 'text-amber-400 bg-amber-500/10 rounded px-1' : 'hover:text-white/80 transition-colors'}`}>
-                                {ayah.numberInSurah === 1 && ayahData.surah.number !== 1 && ayahData.surah.number !== 9 
-                                    ? ayah.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim() 
-                                    : ayah.text
-                                } 
-                                <span className="inline-flex items-center justify-center w-[1em] h-[1em] mx-1 align-middle text-amber-500/40 text-[0.6em] border border-current rounded-full">{ayah.numberInSurah}</span>
-                            </span>
-                        ))
+                        <div className="relative">
+                            {fullSurahAyahs.map(ayah => (
+                                <span key={ayah.number} className={`transition-all duration-300 ${ayah.numberInSurah === ayahData.numberInSurah ? 'text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]' : 'hover:text-white'}`}>
+                                    {ayah.numberInSurah === 1 && ayahData.surah.number !== 1 && ayahData.surah.number !== 9 
+                                        ? ayah.text.replace('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', '').trim() 
+                                        : ayah.text
+                                    } 
+                                    <span className="inline-flex items-center justify-center w-[1em] h-[1em] mx-1 align-middle text-amber-500/40 text-[0.6em] border border-current rounded-full select-none">{ayah.numberInSurah}</span>
+                                </span>
+                            ))}
+                        </div>
                     )}
                 </div>
              </div>
@@ -418,7 +433,7 @@ const Player: React.FC<PlayerProps> = ({ ayahData, isLoading, onNext, onPrev, on
       {tafseer && (
         <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setTafseer(null)}>
             <div className="bg-[#0f172a] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/2">
                     <h3 className="text-emerald-400 font-bold flex items-center gap-2"><Sparkles className="w-4 h-4" /> التفسير الميسر</h3>
                     <button onClick={() => setTafseer(null)}><X className="w-5 h-5 text-white/50 hover:text-white" /></button>
                 </div>
